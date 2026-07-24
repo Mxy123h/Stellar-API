@@ -11,7 +11,6 @@ object StellarHelper {
     private const val STELLAR_MANAGER_PACKAGE_NAME = "roro.stellar.manager"
 
     fun isManagerInstalled(context: Context): Boolean {
-        if (true) return true
         try {
             context.packageManager.getPackageInfo(STELLAR_MANAGER_PACKAGE_NAME, 0)
             return true

@@ -38,6 +38,8 @@ object Stellar {
 
     private var binderReady = false
 
+    private var serviceStarted = false
+
     private var packageName: String? = null
 
 
@@ -61,6 +63,16 @@ object Stellar {
                 data.getBoolean(StellarApiConstants.REQUEST_PERMISSION_REPLY_ALLOWED, false)
             val onetime =
                 data.getBoolean(StellarApiConstants.REQUEST_PERMISSION_REPLY_IS_ONETIME, false)
+            val permission = data.getString(
+                StellarApiConstants.REQUEST_PERMISSION_REPLY_PERMISSION,
+                StellarApiConstants.PERMISSION_STELLAR
+            )
+            if (permission == StellarApiConstants.PERMISSION_STELLAR) {
+                permissionGranted = allowed
+                if (allowed) {
+                    shouldShowRequestPermissionRationale = false
+                }
+            }
             scheduleRequestPermissionResultListener(
                 requestCode,
                 allowed,
@@ -69,12 +81,12 @@ object Stellar {
         }
 
         override fun onServiceStarted() {
+            serviceStarted = true
             scheduleServiceStartedListeners()
         }
     }
 
     private val DEATH_RECIPIENT = DeathRecipient {
-        binderReady = false
         onBinderReceived(null, null)
     }
 
@@ -122,30 +134,39 @@ object Stellar {
             serverUid = -1
             serverApiVersion = -1
             serverContext = null
+            permissionGranted = false
+            shouldShowRequestPermissionRationale = false
+            binderReady = false
+            serviceStarted = false
             this.packageName = null
 
             scheduleBinderDeadListeners()
         } else {
-            if (binder != null) {
-                binder!!.unlinkToDeath(DEATH_RECIPIENT, 0)
+            val oldBinder = binder
+            if (oldBinder != null) {
+                oldBinder.unlinkToDeath(DEATH_RECIPIENT, 0)
             }
             binder = newBinder
             service = IStellarService.Stub.asInterface(newBinder)
             this.packageName = packageName
 
             try {
-                binder!!.linkToDeath(DEATH_RECIPIENT, 0)
+                newBinder.linkToDeath(DEATH_RECIPIENT, 0)
             } catch (_: Throwable) {
             }
 
             try {
-                attachApplication(binder!!, packageName)
+                if (!attachApplication(newBinder, packageName)) {
+                    onBinderReceived(null, null)
+                }
             } catch (e: Throwable) {
                 Log.w("StellarApplication", Log.getStackTraceString(e))
+                try {
+                    newBinder.unlinkToDeath(DEATH_RECIPIENT, 0)
+                } catch (_: Throwable) {
+                }
+                onBinderReceived(null, null)
             }
-
-            binderReady = true
-            scheduleBinderReceivedListeners()
         }
     }
 
@@ -308,8 +329,12 @@ object Stellar {
     fun getPackageName(): String? = packageName
 
     fun addServiceStartedListener(listener: OnServiceStartedListener, handler: Handler? = null) {
+        val holder = ListenerHolder(listener, handler)
         synchronized(RECEIVED_LISTENERS) {
-            SERVICE_STARTED_LISTENERS.add(ListenerHolder(listener, handler))
+            SERVICE_STARTED_LISTENERS.add(holder)
+        }
+        if (serviceStarted) {
+            dispatchServiceStartedListener(holder)
         }
     }
 
@@ -322,12 +347,16 @@ object Stellar {
     private fun scheduleServiceStartedListeners() {
         synchronized(RECEIVED_LISTENERS) {
             for (holder in SERVICE_STARTED_LISTENERS) {
-                if (holder.handler != null) {
-                    holder.handler.post { holder.listener.onServiceStarted() }
-                } else {
-                    MAIN_HANDLER.post { holder.listener.onServiceStarted() }
-                }
+                dispatchServiceStartedListener(holder)
             }
+        }
+    }
+
+    private fun dispatchServiceStartedListener(holder: ListenerHolder<OnServiceStartedListener>) {
+        if (holder.handler != null) {
+            holder.handler.post { holder.listener.onServiceStarted() }
+        } else {
+            MAIN_HANDLER.post { holder.listener.onServiceStarted() }
         }
     }
 
@@ -442,7 +471,10 @@ object Stellar {
                 throw rethrowAsRuntimeException(e)
             }
 
-    fun requestPermission(permission: String = "stellar", requestCode: Int) {
+    fun requestPermission(
+        permission: String = StellarApiConstants.PERMISSION_STELLAR,
+        requestCode: Int
+    ) {
         try {
             requireService().requestPermission(permission, requestCode)
         } catch (e: RemoteException) {
@@ -450,7 +482,7 @@ object Stellar {
         }
     }
 
-    fun checkSelfPermission(permission: String = "stellar"): Boolean {
+    fun checkSelfPermission(permission: String = StellarApiConstants.PERMISSION_STELLAR): Boolean {
         return try {
             requireService().checkSelfPermission(permission)
         } catch (_: RemoteException) {

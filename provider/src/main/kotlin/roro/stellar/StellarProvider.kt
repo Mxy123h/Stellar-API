@@ -59,21 +59,21 @@ open class StellarProvider : ContentProvider() {
     }
 
     private fun handleSendBinder(extras: Bundle) {
-        Log.i(TAG, ", ${Stellar.binder}, ${pingBinder()}")
+        Log.i(TAG, "收到 Stellar Binder：current=${Stellar.binder}, alive=${pingBinder()}")
 
         if (pingBinder()) {
-            Log.w(TAG, "")
+            Log.w(TAG, "已有可用 Stellar Binder，忽略重复发送")
             return
         }
 
         val container = extras.getParcelable<BinderContainer?>(EXTRA_BINDER)
         if (container != null && container.binder != null) {
-            Log.i(TAG, "")
+            Log.i(TAG, "接收并绑定 Stellar Binder")
 
             onBinderReceived(container.binder, context!!.packageName)
 
             if (enableMultiProcess) {
-                Log.d(TAG, "")
+                Log.d(TAG, "多进程支持已启用，广播 Binder 给同包其他进程")
 
                 val intent = Intent(ACTION_BINDER_RECEIVED)
                     .putExtra(EXTRA_BINDER, container)
@@ -81,7 +81,7 @@ open class StellarProvider : ContentProvider() {
                 context!!.sendBroadcast(intent)
             }
         } else {
-            Log.e(TAG, "")
+            Log.e(TAG, "发送 Binder 的 extras 中没有有效 Binder")
         }
     }
 
@@ -94,24 +94,24 @@ open class StellarProvider : ContentProvider() {
     }
 
     private fun handleSendUserService(extras: Bundle): Bundle? {
-        Log.i(TAG, "")
+        Log.i(TAG, "收到用户服务 Binder")
 
         val service = Stellar.getService()
         if (service == null) {
-            Log.e(TAG, "")
+            Log.e(TAG, "Stellar 服务未连接，无法附加用户服务")
             return null
         }
 
         val container = extras.getParcelable<BinderContainer?>(EXTRA_BINDER)
         if (container?.binder == null) {
-            Log.e(TAG, "")
+            Log.e(TAG, "用户服务 extras 中没有有效 Binder")
             return null
         }
 
         try {
             service.attachUserService(container.binder, extras)
         } catch (e: Exception) {
-            Log.e(TAG, "", e)
+            Log.e(TAG, "附加用户服务失败", e)
             return null
         }
 
@@ -175,7 +175,8 @@ open class StellarProvider : ContentProvider() {
         fun enableMultiProcessSupport(isProviderProcess: Boolean) {
             Log.d(
                 TAG,
-                "" + (if (isProviderProcess) "" else "")
+                if (isProviderProcess) "当前进程是 Provider 进程，启用多进程 Binder 转发"
+                else "当前进程不是 Provider 进程，启用多进程 Binder 接收"
             )
 
             Companion.isProviderProcess = isProviderProcess
@@ -187,13 +188,13 @@ open class StellarProvider : ContentProvider() {
                 return
             }
 
-            Log.d(TAG, "")
+            Log.d(TAG, "非 Provider 进程请求当前进程的 Stellar Binder")
 
             val receiver: BroadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context, intent: Intent) {
                     val container = intent.getParcelableExtra<BinderContainer?>(EXTRA_BINDER)
                     if (container != null && container.binder != null) {
-                        Log.i(TAG, "")
+                        Log.i(TAG, "非 Provider 进程收到 Stellar Binder 广播")
                         onBinderReceived(container.binder, context.packageName)
                     }
                 }
@@ -222,7 +223,7 @@ open class StellarProvider : ContentProvider() {
 
                 val container = reply.getParcelable<BinderContainer?>(EXTRA_BINDER)
                 if (container != null && container.binder != null) {
-                    Log.i(TAG, "")
+                    Log.i(TAG, "非 Provider 进程通过 Provider 取得 Stellar Binder")
                     onBinderReceived(container.binder, context.packageName)
                 }
             }

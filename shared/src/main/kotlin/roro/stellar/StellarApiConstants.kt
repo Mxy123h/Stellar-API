@@ -6,13 +6,17 @@ object StellarApiConstants {
     val SERVER_VERSION = BuildConfig.SERVER_API_VERSION
 
     const val PERMISSION_KEY = "roro.stellar.permissions"
+    const val ACTION_FOLLOW_STARTUP = "roro.stellar.intent.action.FOLLOW_STELLAR_STARTUP"
+    const val PERMISSION_STELLAR = "stellar"
+    const val PERMISSION_FOLLOW_STARTUP = "follow_stellar_startup"
+
     val PERMISSIONS = arrayOf(
-        "stellar",
-        "follow_stellar_startup"
+        PERMISSION_STELLAR,
+        PERMISSION_FOLLOW_STARTUP
     )
 
     fun isRuntimePermission(permission: String): Boolean =
-        permission == "stellar" || permission == "shizuku" || permission.endsWith(":runtime")
+        permission == PERMISSION_STELLAR || permission == "shizuku" || permission.endsWith(":runtime")
 
     const val BINDER_DESCRIPTOR = "com.stellar.server.IStellarService"
     const val BINDER_TRANSACTION_transact = 1
