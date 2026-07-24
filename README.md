@@ -633,9 +633,9 @@ class FollowStellarStartup : BroadcastReceiver() {
 ```xml
 <receiver
     android:name=".FollowStellarStartup"
-    android:exported="false">
+    android:exported="true">
     <intent-filter>
-        <action android:name="roro.stellar.action.STELLAR_STARTED" />
+        <action android:name="roro.stellar.intent.action.FOLLOW_STELLAR_STARTUP" />
     </intent-filter>
 </receiver>
 ```
