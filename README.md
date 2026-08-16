@@ -795,7 +795,7 @@ Stellar 是基于 Shizuku 的分支项目，因此 API 设计高度相似，迁�
 
 | 特性 | Stellar | Shizuku |
 |------|---------|---------|
-| **包名** | `roro.stellar.manager` | `moe.shizuku.privileged.api` |
+| **包名** | `roro.stellar.manager.up` | `moe.shizuku.privileged.api` |
 | **API 命名空间** | `roro.stellar.*` | `rikka.shizuku.*` |
 | **权限系统** | 多权限：`stellar`、`follow_stellar_startup` | 单一权限模型 |
 | **启动钩子** | 内置支持跟随服务启动 | 无内置支持 |

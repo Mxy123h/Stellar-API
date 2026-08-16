@@ -162,7 +162,7 @@ open class StellarProvider : ContentProvider() {
         private const val EXTRA_BINDER = "roro.stellar.manager.intent.extra.BINDER"
         private const val EXTRA_CLIENT_BINDER = "roro.stellar.manager.intent.extra.CLIENT_BINDER"
 
-        const val MANAGER_APPLICATION_ID: String = "roro.stellar.manager"
+        const val MANAGER_APPLICATION_ID: String = "roro.stellar.manager.up"
 
         private var enableMultiProcess = false
 

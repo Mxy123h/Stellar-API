@@ -8,7 +8,7 @@ import roro.stellar.Stellar.version
 
 object StellarHelper {
     private const val SHIZUKU_PACKAGE_NAME = "moe.shizuku.privileged.api"
-    private const val STELLAR_MANAGER_PACKAGE_NAME = "roro.stellar.manager"
+    private const val STELLAR_MANAGER_PACKAGE_NAME = "roro.stellar.manager.up"
 
     fun isManagerInstalled(context: Context): Boolean {
         try {
